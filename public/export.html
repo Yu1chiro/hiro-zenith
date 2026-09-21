@@ -186,12 +186,10 @@ function mountNav(active, pageTitle) {
         </div>
       </aside>
     </div>`;
-  const open = () => { $('drawer').classList.remove('pointer-events-none'); $('drawerOverlay').classList.remove('opacity-0'); $('drawerPanel').classList.remove('-translate-x-full'); };
-  const close = () => { $('drawer').classList.add('pointer-events-none'); $('drawerOverlay').classList.add('opacity-0'); $('drawerPanel').classList.add('-translate-x-full'); };
-  $('menuOpen').addEventListener('click', open);
-  $('menuClose').addEventListener('click', close);
-  $('drawerOverlay').addEventListener('click', close);
-  $('btnLock').addEventListener('click', async () => {
+  const open = () => { $('drawer').classList.remove('pointer-events-none'); $('drawerOverlay').classList.remove('opacity-0');$('drawerPanel').classList.remove('-translate-x-full'); };
+  const close = () => { $('drawer').classList.add('pointer-events-none'); $('drawerOverlay').classList.add('opacity-0');$('drawerPanel').classList.add('-translate-x-full'); };
+  $('menuOpen').addEventListener('click', open);$('menuClose').addEventListener('click', close);
+  $('drawerOverlay').addEventListener('click', close);$('btnLock').addEventListener('click', async () => {
     try { await fetch('/api/logout', { method: 'POST' }); } catch (e) {}
     location.href = '/login';
   });
@@ -210,7 +208,7 @@ function currentRange() {
   return { from: S.week, to: addDays(S.week, S.mode === 'weekday' ? 4 : 6) };
 }
 
-/* ======================= Render ======================= */
+/* ======================= Render UI ======================= */
 function renderModes() {
   $('modeList').innerHTML = MODES.map((m) => {
     const on = S.mode === m.key;
@@ -229,8 +227,7 @@ function renderWeekCard() {
   const r = currentRange();
   $('weekCard').classList.toggle('hidden', !r);
   if (!r) return;
-  $('weekLabel').textContent = rangeLabel(r.from, r.to);
-  $('weekNow').classList.toggle('hidden', S.week === mondayOf(todayISO()));
+  $('weekLabel').textContent = rangeLabel(r.from, r.to);$('weekNow').classList.toggle('hidden', S.week === mondayOf(todayISO()));
 }
 
 function renderPreview() {
@@ -254,18 +251,15 @@ function renderPreview() {
   const disabled = items.length === 0;
   ['btnDownload', 'btnPreview'].forEach((id) => {
     $(id).disabled = disabled;
-    $(id).classList.toggle('opacity-50', disabled);
-    $(id).classList.toggle('pointer-events-none', disabled);
+    $(id).classList.toggle('opacity-50', disabled);$(id).classList.toggle('pointer-events-none', disabled);
   });
 
   if (!items.length) {
-    $('preview').className = 'rounded-2xl bg-cream-50 border border-dashed border-leaf-200 p-8 text-center font-sans text-sm font-bold text-leaf-500';
-    $('preview').innerHTML = `<i class="fa-regular fa-folder-open text-3xl block mb-2"></i>Belum ada kegiatan pada periode ini.`;
+    $('preview').className = 'rounded-2xl bg-cream-50 border border-dashed border-leaf-200 p-8 text-center font-sans text-sm font-bold text-leaf-500';$('preview').innerHTML = `<i class="fa-regular fa-folder-open text-3xl block mb-2"></i>Belum ada kegiatan pada periode ini.`;
     return;
   }
 
-  $('preview').className = 'rounded-2xl bg-white border border-leaf-200 shadow-inner p-5 font-serif text-[13px] leading-relaxed text-black max-h-[26rem] overflow-y-auto';
-  $('preview').innerHTML = `
+  $('preview').className = 'rounded-2xl bg-white border border-leaf-200 shadow-inner p-5 font-serif text-[13px] leading-relaxed text-black max-h-[26rem] overflow-y-auto';$('preview').innerHTML = `
     <div class="text-center font-bold">
       <div class="text-[15px]">${esc(isAll ? 'LAPORAN KEGIATAN' : 'LAPORAN MINGGUAN')} ${esc(S.config.org)}</div>
       <div class="mt-1">Periode : ${esc(periodText(from, to, isAll))}</div>
@@ -284,8 +278,7 @@ function renderPreview() {
 
 async function loadPreview() {
   const token = ++S.token;
-  $('preview').className = 'rounded-2xl bg-leaf-50 border border-leaf-100 p-8 text-center font-sans text-sm font-bold text-leaf-600';
-  $('preview').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat pratinjau...';
+  $('preview').className = 'rounded-2xl bg-leaf-50 border border-leaf-100 p-8 text-center font-sans text-sm font-bold text-leaf-600';$('preview').innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Memuat pratinjau...';
   const r = currentRange();
   try {
     const rows = await api('/api/activities' + (r ? `?from=${r.from}&to=${r.to}` : ''));
@@ -306,21 +299,146 @@ function refresh() {
   loadPreview();
 }
 
-/* ======================= Aksi export ======================= */
-function pdfUrl(inline) {
-  let url = `/api/export/pdf?mode=${S.mode}&week=${S.week}`;
-  if (inline) url += '&inline=1';
-  return url;
+/* ======================= Aksi export (jsPDF) ======================= */
+// Impor jsPDF dari CDN secara dinamis
+async function loadJSPDF() {
+  if (window.jspdf) return window.jspdf;
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+    script.onload = () => resolve(window.jspdf);
+    script.onerror = () => reject(new Error('Gagal memuat pustaka jsPDF'));
+    document.head.appendChild(script);
+  });
 }
-function doDownload() {
-  if (!S.items.length) { toast('info', 'Belum ada kegiatan pada periode ini.'); return; }
-  toast('success', 'Menyiapkan PDF untuk diunduh...');
-  window.location.href = pdfUrl(false);
+
+// Render PDF di sisi Klien
+async function generatePDFClientSide(action) {
+  if (!S.items.length) { 
+    toast('info', 'Belum ada kegiatan pada periode ini.'); 
+    return; 
+  }
+
+  const btnId = action === 'preview' ? 'btnPreview' : 'btnDownload';
+  const icon = action === 'preview' ? 'fa-eye' : 'fa-download';
+  const origText = `<i class="fa-solid ${icon}"></i>${action === 'preview' ? 'Buka' : 'Unduh PDF'}`;
+  
+  // Ubah tombol ke state Loading
+  $(btnId).disabled = true;
+  $(btnId).classList.add('opacity-70');$(btnId).innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>Menyiapkan...';
+
+  try {
+    // 1. Ambil data JSON dari backend (API Export sudah kita ubah kirim JSON)
+    const reportData = await api(`/api/export/pdf?mode=${S.mode}&week=${S.week}`);
+    
+    // 2. Muat jsPDF
+    const { jsPDF } = await loadJSPDF();
+    
+    // 3. Konfigurasi Dokumen
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+
+    const MARGIN = 72; // Margin 1 inci
+    const PAGE_WIDTH = doc.internal.pageSize.getWidth();
+    const PAGE_HEIGHT = doc.internal.pageSize.getHeight();
+    const TEXT_WIDTH = PAGE_WIDTH - (MARGIN * 2);
+    let yPos = MARGIN;
+
+    // Helper Fungsi Cetak Text & Kalkulasi Y
+    const writeText = (text, size, isBold = false, isItalic = false, align = 'left', customX = null) => {
+      doc.setFontSize(size);
+      let fontStyle = 'normal';
+      if (isBold) fontStyle = 'bold';
+      if (isItalic) fontStyle = 'italic';
+      doc.setFont('times', fontStyle);
+      
+      const xPos = customX !== null ? customX : (align === 'center' ? PAGE_WIDTH / 2 : MARGIN);
+      const options = { align: align, maxWidth: TEXT_WIDTH };
+      
+      doc.text(text, xPos, yPos, options);
+      
+      // Auto-wrap split line perhitungan tinggi
+      const textLines = doc.splitTextToSize(text, TEXT_WIDTH);
+      return (textLines.length * (size * 1.15));
+    };
+
+    const checkPageBreak = (requiredHeight) => {
+      if (yPos + requiredHeight > PAGE_HEIGHT - MARGIN) {
+        doc.addPage();
+        yPos = MARGIN;
+      }
+    };
+
+    // --- RENDER KOP ---
+    yPos += writeText(reportData.title, 12, true, false, 'center');
+    yPos += writeText('Periode : ' + reportData.periode, 12, true, false, 'center') + 12;
+    yPos += writeText(reportData.name, 14, true, false, 'center') + 4;
+    
+    doc.setLineWidth(1);
+    doc.line(MARGIN, yPos, PAGE_WIDTH - MARGIN, yPos);
+    yPos += 16;
+
+    // --- RENDER DAFTAR ---
+    const BODY_SIZE = 14;
+    const NOTE_SIZE = 12;
+    const NUM_W = 26;
+    
+    reportData.days.forEach(day => {
+      const dayHeader = longDate(day.date); 
+      
+      checkPageBreak(BODY_SIZE * 3);
+      yPos += writeText(dayHeader, BODY_SIZE, true, false, 'left') + 4;
+      
+      day.items.forEach((item, index) => {
+        let itemEstimatedHeight = (doc.splitTextToSize(item.title, TEXT_WIDTH - NUM_W).length * BODY_SIZE * 1.15);
+        if(item.notes) {
+          itemEstimatedHeight += (doc.splitTextToSize('Catatan: ' + item.notes, TEXT_WIDTH - NUM_W).length * NOTE_SIZE * 1.15) + 2;
+        }
+        checkPageBreak(itemEstimatedHeight + 10);
+
+        writeText(`${index + 1}.`, BODY_SIZE, false, false, 'right', MARGIN + NUM_W - 5);
+        
+        doc.setFontSize(BODY_SIZE);
+        doc.setFont('times', 'normal');
+        const titleLines = doc.splitTextToSize(item.title, TEXT_WIDTH - NUM_W);
+        doc.text(titleLines, MARGIN + NUM_W, yPos);
+        yPos += (titleLines.length * (BODY_SIZE * 1.15));
+
+        if (item.notes) {
+          yPos += 2;
+          doc.setTextColor(68, 68, 68);
+          doc.setFontSize(NOTE_SIZE);
+          doc.setFont('times', 'italic');
+          const noteLines = doc.splitTextToSize('Catatan: ' + item.notes, TEXT_WIDTH - NUM_W);
+          doc.text(noteLines, MARGIN + NUM_W, yPos);
+          doc.setTextColor(0, 0, 0); 
+          yPos += (noteLines.length * (NOTE_SIZE * 1.15));
+        }
+        yPos += 4; 
+      });
+      yPos += 8;
+    });
+
+    // --- RENDER OUTPUT KLIEN ---
+    if (action === 'preview') {
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      window.open(blobUrl, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000); 
+    } else {
+      doc.save(reportData.filename);
+      toast('success', 'PDF berhasil diunduh.');
+    }
+
+  } catch (err) {
+    toast('error', err.message || 'Gagal menyiapkan PDF.');
+  } finally {
+    $(btnId).disabled = false;
+    $(btnId).classList.remove('opacity-70');$(btnId).innerHTML = origText;
+  }
 }
-function doOpen() {
-  if (!S.items.length) { toast('info', 'Belum ada kegiatan pada periode ini.'); return; }
-  window.open(pdfUrl(true), '_blank', 'noopener');
-}
+
+function doDownload() { generatePDFClientSide('download'); }
+function doOpen() { generatePDFClientSide('preview'); }
 
 /* ======================= Init ======================= */
 async function init() {
@@ -333,10 +451,10 @@ async function init() {
     refresh();
   });
   $('weekPrev').addEventListener('click', () => { S.week = addDays(S.week, -7); refresh(); });
-  $('weekNext').addEventListener('click', () => { S.week = addDays(S.week, 7); refresh(); });
-  $('weekNow').addEventListener('click', () => { S.week = mondayOf(todayISO()); refresh(); });
-  $('btnDownload').addEventListener('click', doDownload);
-  $('btnPreview').addEventListener('click', doOpen);
+  $('weekNext').addEventListener('click', () => { S.week = addDays(S.week, 7); refresh(); });$('weekNow').addEventListener('click', () => { S.week = mondayOf(todayISO()); refresh(); });
+  
+  // Kaitkan tombol Export dengan fungsi jsPDF baru
+  $('btnDownload').addEventListener('click', doDownload);$('btnPreview').addEventListener('click', doOpen);
 
   try { S.config = await api('/api/config'); } catch (e) { toast('error', e.message); }
   refresh();

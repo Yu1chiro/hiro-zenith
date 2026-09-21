@@ -5,7 +5,6 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const { Pool } = require('pg');
-const PDFDocument = require('pdfkit');
 
 /* =====================================================================
  *  KONFIGURASI
@@ -716,17 +715,17 @@ app.get(
     const days = [...byDate.entries()].map(([date, items]) => ({ date, items }));
 
     const isAll = mode === 'all';
-    renderReportPdf(res, {
+    
+    // Alih-alih membuat PDF di server, kembalikan JSON terstruktur ke frontend
+    res.json({
       title: isAll ? `LAPORAN KEGIATAN ${REPORT_ORG}` : `LAPORAN MINGGUAN ${REPORT_ORG}`,
       periode: periodLabel(from, to, isAll),
       name: REPORT_NAME,
       days,
-      filename: `Laporan_${isAll ? 'Semua' : 'Mingguan'}_${from}_sd_${to}.pdf`,
-      inline: req.query.inline === '1',
+      filename: `Laporan_${isAll ? 'Semua' : 'Mingguan'}_${from}_sd_${to}.pdf`
     });
   })
 );
-
 /* =====================================================================
  *  404 & ERROR HANDLER
  * ===================================================================== */
