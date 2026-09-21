@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 
 const express = require('express');
@@ -527,7 +526,28 @@ app.delete(
 /* =====================================================================
  *  EXPORT PDF  (meniru format dokumen LAPORAN MINGGUAN LPK ZENITH)
  * ===================================================================== */
-const STD_FONT = { regular: 'Times-Roman', bold: 'Times-Bold', italic: 'Times-Italic' };
+// PENTING: sengaja TIDAK pakai nama font bawaan pdfkit ('Times-Roman', 'Helvetica', dst).
+// Semua font "standar 14" pdfkit (termasuk Helvetica/font default-nya) di-load lewat mekanisme
+// internal package yang riskan gagal di lingkungan serverless seperti Vercel (file pendukungnya
+// tidak selalu ikut ter-bundle). Jadi gantinya kita pakai file .ttf sendiri yang taruh di
+// public/fonts/ - pasti ikut ke-deploy karena bagian dari folder public/ project ini juga.
+const FONT_DIR = path.join(PUBLIC_DIR, 'fonts');
+const STD_FONT_FILES = {
+  regular: path.join(FONT_DIR, 'Tinos-Regular.ttf'),
+  bold: path.join(FONT_DIR, 'Tinos-Bold.ttf'),
+  italic: path.join(FONT_DIR, 'Tinos-Italic.ttf'),
+};
+// Fallback darurat: kalau file font kustom di atas ternyata tidak ketemu (misal lupa ikut commit/
+// deploy), tetap coba jalan pakai font bawaan pdfkit supaya tidak 100% mati - tapi ini kembali
+// berisiko sama seperti masalah awal, jadi selalu cek log berikut di production.
+const STD_FONT = {
+  regular: fs.existsSync(STD_FONT_FILES.regular) ? STD_FONT_FILES.regular : 'Helvetica',
+  bold: fs.existsSync(STD_FONT_FILES.bold) ? STD_FONT_FILES.bold : 'Helvetica-Bold',
+  italic: fs.existsSync(STD_FONT_FILES.italic) ? STD_FONT_FILES.italic : 'Helvetica-Oblique',
+};
+if (STD_FONT.regular === 'Helvetica') {
+  console.warn('[PDF] File font kustom tidak ditemukan di', FONT_DIR, '- fallback ke font bawaan pdfkit (berisiko gagal lagi di production).');
+}
 // Karakter di luar WinAnsi tidak bisa dirender font bawaan PDF
 const NON_LATIN = /[^\u0000-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u2026\u20AC]/;
 const NON_LATIN_G = new RegExp(NON_LATIN.source, 'g');
