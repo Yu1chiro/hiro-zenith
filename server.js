@@ -187,6 +187,14 @@ tailwind.config = { theme: { extend: {
   animation: { pop: 'pop .25s ease-out', shake: 'shake .35s ease-in-out' }
 } } };
 </script>
+<style>
+/* Hilangkan tanda panah pada input number */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+    </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
@@ -213,7 +221,7 @@ tailwind.config = { theme: { extend: {
       <div id="pinWrap" class="mt-6">
         <label for="pin" class="block text-sm font-bold text-leaf-800 mb-2">PIN</label>
         <div class="relative">
-          <input id="pin" type="password" autocomplete="off" autofocus placeholder="••••••"
+          <input id="pin" type="number" autocomplete="off" autofocus placeholder="••••••"
             class="w-full h-14 rounded-2xl border-2 border-leaf-200 bg-white px-4 pr-14 text-center text-xl tracking-[0.35em] font-bold text-leaf-900 placeholder:tracking-normal placeholder:text-leaf-300 outline-none focus:border-leaf-500 focus:ring-4 focus:ring-leaf-200/60">
           <div id="togglePin" role="button" tabindex="0" aria-label="Tampilkan PIN"
             class="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 rounded-xl flex items-center justify-center text-leaf-500 hover:bg-leaf-100 cursor-pointer">
@@ -226,7 +234,7 @@ tailwind.config = { theme: { extend: {
         <i class="fa-solid fa-lock-open"></i><span>Masuk</span>
       </button>
     </div>
-    <p class="text-center text-xs text-leaf-600 mt-5">Aplikasi pribadi · LPK Zenith</p>
+    <p class="text-center text-xs text-leaf-600 mt-5">Daily Report - Hiro</p>
   </div>
 </main>
 
