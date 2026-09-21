@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#e4efdb">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Beranda · Hiro Zenith Report</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { theme: { extend: {
+  fontFamily: { sans: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+  colors: {
+    leaf: { 50:'#f3f8ef',100:'#e4efdb',200:'#cbe1bb',300:'#a9cf94',400:'#86b872',500:'#679d55',600:'#4f7f42',700:'#3f6537',800:'#34512f',900:'#2b4328' },
+    cream: { 50:'#fdfcf6',100:'#faf7ea',200:'#f3edd3' },
+    sky2: { 100:'#e3f1f4',200:'#c7e3ea',400:'#7fb9c8' },
+    peach: { 100:'#fdeedd',200:'#fadcbb',400:'#eea86c',600:'#c8823f' },
+    rose2: { 100:'#fbe6e4',200:'#f6cbc7',400:'#e28f88',600:'#c4574f' }
+  },
+  keyframes: {
+    pop: { '0%': { opacity: 0, transform: 'translateY(-8px) scale(.98)' }, '100%': { opacity: 1, transform: 'none' } },
+    sheet: { '0%': { transform: 'translateY(30px)', opacity: 0 }, '100%': { transform: 'none', opacity: 1 } }
+  },
+  animation: { pop: 'pop .25s ease-out', sheet: 'sheet .25s ease-out' }
+} } };
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+
+<body class="font-sans text-leaf-900 min-h-screen antialiased">
+<div class="fixed inset-0 -z-10 bg-gradient-to-b from-sky2-100 via-cream-50 to-leaf-100"></div>
+<div class="fixed -z-10 top-24 -right-16 w-52 h-52 rounded-full bg-white/60 blur-2xl"></div>
+
+<div id="navRoot"></div>
+
+<!-- Toast alert (div Tailwind) -->
+<div class="fixed top-16 inset-x-0 z-[80] px-4 pointer-events-none">
+  <div id="toastList" class="max-w-xl mx-auto space-y-2"></div>
+</div>
+
+<main class="max-w-xl mx-auto px-4 pt-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] space-y-4">
+
+  <!-- Hero -->
+  <section class="relative overflow-hidden rounded-[1.75rem] bg-gradient-to-br from-leaf-200 via-leaf-100 to-sky2-100 border border-leaf-200/70 p-5 shadow-sm">
+    <div class="absolute -right-6 -top-6 w-28 h-28 rounded-full bg-white/40"></div>
+    <div class="absolute right-8 bottom-2 text-leaf-300/70 text-5xl rotate-12"><i class="fa-solid fa-leaf"></i></div>
+    <p class="text-xs font-bold text-leaf-700 uppercase tracking-wide">Halo, <span id="heroName">—</span></p>
+    <h2 id="heroDate" class="mt-1 text-lg font-extrabold text-leaf-900 leading-snug">—</h2>
+    <div id="heroStatus" class="mt-3 inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1.5 text-xs font-bold text-leaf-800">
+      <i class="fa-solid fa-spinner fa-spin"></i> Memuat...
+    </div>
+  </section>
+
+  <!-- Form -->
+  <section id="formCard" class="rounded-[1.75rem] bg-white/85 backdrop-blur border border-leaf-100 shadow-sm p-5">
+    <div class="flex items-center justify-between gap-3 mb-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <div id="formIcon" class="w-10 h-10 shrink-0 rounded-2xl bg-leaf-100 text-leaf-600 flex items-center justify-center"><i class="fa-solid fa-plus"></i></div>
+        <div class="min-w-0">
+          <h3 id="formTitle" class="text-base font-extrabold text-leaf-900">Tambah Kegiatan</h3>
+          <p id="formSub" class="text-xs text-leaf-600">Catat apa yang kamu kerjakan</p>
+        </div>
+      </div>
+      <button id="btnCancelEdit" class="hidden shrink-0 h-9 px-3 rounded-xl bg-peach-100 text-peach-600 text-xs font-extrabold">
+        <i class="fa-solid fa-xmark mr-1"></i>Batal
+      </button>
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label for="title" class="block text-sm font-bold text-leaf-800 mb-1.5">Nama kegiatan <span class="text-rose2-400">*</span></label>
+        <input id="title" type="text" maxlength="255" autocomplete="off" placeholder="Contoh: Mengikuti weekly meeting"
+          class="w-full min-h-[3.5rem] rounded-2xl border-2 border-leaf-200 bg-white px-4 py-4 text-base text-leaf-900 placeholder:text-leaf-300 outline-none focus:border-leaf-500 focus:ring-4 focus:ring-leaf-200/60">
+        <div id="titleErr" class="hidden mt-2 rounded-xl bg-rose2-100 border border-rose2-200 text-rose2-600 text-xs font-bold px-3 py-2">
+          <i class="fa-solid fa-circle-exclamation mr-1"></i><span></span>
+        </div>
+      </div>
+
+      <div>
+        <label for="date" class="block text-sm font-bold text-leaf-800 mb-1.5">Tanggal <span class="text-rose2-400">*</span></label>
+        <input id="date" type="date"
+          class="w-full h-14 rounded-2xl border-2 border-leaf-200 bg-white px-4 text-base text-leaf-900 outline-none focus:border-leaf-500 focus:ring-4 focus:ring-leaf-200/60">
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <div id="datePreview" class="inline-flex items-center gap-2 rounded-full bg-leaf-100 text-leaf-800 text-xs font-extrabold px-3 py-1.5"></div>
+          <button id="chipToday" class="h-8 px-3 rounded-full bg-sky2-100 text-sky2-400 text-xs font-extrabold border border-sky2-200">Hari ini</button>
+          <button id="chipYesterday" class="h-8 px-3 rounded-full bg-cream-100 text-peach-600 text-xs font-extrabold border border-cream-200">Kemarin</button>
+        </div>
+        <div id="dateErr" class="hidden mt-2 rounded-xl bg-rose2-100 border border-rose2-200 text-rose2-600 text-xs font-bold px-3 py-2">
+          <i class="fa-solid fa-circle-exclamation mr-1"></i><span></span>
+        </div>
+      </div>
+
+      <div>
+        <label for="notes" class="block text-sm font-bold text-leaf-800 mb-1.5">Catatan <span class="text-leaf-500 font-semibold">(opsional)</span></label>
+        <textarea id="notes" rows="3" maxlength="2000" placeholder="Tambahkan detail bila perlu..."
+          class="w-full rounded-2xl border-2 border-leaf-200 bg-white px-4 py-3.5 text-base text-leaf-900 placeholder:text-leaf-300 outline-none focus:border-leaf-500 focus:ring-4 focus:ring-leaf-200/60 resize-none"></textarea>
+      </div>
+
+      <button id="btnSave" class="w-full h-14 rounded-2xl bg-leaf-500 hover:bg-leaf-600 active:scale-[.98] transition text-white text-base font-extrabold shadow-md shadow-leaf-500/30 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-floppy-disk"></i><span id="btnSaveText">Simpan Kegiatan</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Daftar mingguan -->
+  <section class="rounded-[1.75rem] bg-white/85 backdrop-blur border border-leaf-100 shadow-sm p-5">
+    <div class="flex items-center justify-between gap-2">
+      <button id="weekPrev" aria-label="Minggu sebelumnya" class="w-11 h-11 rounded-2xl bg-leaf-100 text-leaf-700 active:scale-95 flex items-center justify-center"><i class="fa-solid fa-chevron-left"></i></button>
+      <div class="text-center min-w-0">
+        <p class="text-[11px] font-bold uppercase tracking-wide text-leaf-600">Laporan Mingguan</p>
+        <h3 id="weekLabel" class="text-base font-extrabold text-leaf-900">—</h3>
+      </div>
+      <button id="weekNext" aria-label="Minggu berikutnya" class="w-11 h-11 rounded-2xl bg-leaf-100 text-leaf-700 active:scale-95 flex items-center justify-center"><i class="fa-solid fa-chevron-right"></i></button>
+    </div>
+
+    <div class="mt-3 flex items-center justify-between gap-2">
+      <div id="weekSummary" class="flex flex-wrap gap-2"></div>
+      <button id="weekNow" class="hidden shrink-0 h-8 px-3 rounded-full bg-peach-100 text-peach-600 text-xs font-extrabold border border-peach-200">Minggu ini</button>
+    </div>
+
+    <div id="weekList" class="mt-4 space-y-3"></div>
+  </section>
+</main>
+
+<!-- Modal konfirmasi hapus (div Tailwind, bukan confirm() browser) -->
+<div id="deleteModal" class="hidden fixed inset-0 z-[90] items-end sm:items-center justify-center">
+  <div id="deleteOverlay" class="absolute inset-0 bg-leaf-900/40 backdrop-blur-sm"></div>
+  <div class="relative w-full max-w-sm mx-auto m-0 sm:m-4 bg-white rounded-t-[2rem] sm:rounded-[2rem] p-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] shadow-2xl animate-sheet">
+    <div class="w-14 h-14 rounded-2xl bg-rose2-100 text-rose2-600 flex items-center justify-center text-xl mx-auto"><i class="fa-solid fa-trash-can"></i></div>
+    <h3 class="mt-4 text-center text-lg font-extrabold text-leaf-900">Hapus kegiatan ini?</h3>
+    <p id="deleteText" class="mt-2 text-center text-sm text-leaf-700 break-words"></p>
+    <p class="mt-1 text-center text-xs text-leaf-500">Tindakan ini tidak dapat dibatalkan.</p>
+    <div class="mt-5 grid grid-cols-2 gap-3">
+      <button id="deleteCancel" class="h-12 rounded-2xl bg-leaf-100 text-leaf-800 text-sm font-extrabold active:scale-95">Batal</button>
+      <button id="deleteConfirm" class="h-12 rounded-2xl bg-rose2-600 text-white text-sm font-extrabold active:scale-95 flex items-center justify-center gap-2">
+        <i class="fa-solid fa-trash"></i><span>Ya, Hapus</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ======================= Util umum ======================= */
+const $ = (id) => document.getElementById(id);
+const HARI = ['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+const BULAN = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+const BULAN_S = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des'];
+const pad = (n) => String(n).padStart(2, '0');
+const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const parseISO = (s) => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const addDays = (iso, n) => { const d = parseISO(iso); d.setDate(d.getDate() + n); return toISO(d); };
+const mondayOf = (iso) => { const d = parseISO(iso); const w = d.getDay(); d.setDate(d.getDate() + (w === 0 ? -6 : 1 - w)); return toISO(d); };
+const todayISO = () => toISO(new Date());
+const isISO = (s) => /^\d{4}-\d{2}-\d{2}$/.test(s || '') && toISO(parseISO(s)) === s;
+const longDate = (iso) => { const d = parseISO(iso); return `${HARI[d.getDay()]}, ${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`; };
+const rangeLabel = (a, b) => {
+  const x = parseISO(a), y = parseISO(b);
+  if (x.getFullYear() !== y.getFullYear()) return `${x.getDate()} ${BULAN_S[x.getMonth()]} ${x.getFullYear()} – ${y.getDate()} ${BULAN_S[y.getMonth()]} ${y.getFullYear()}`;
+  if (x.getMonth() !== y.getMonth()) return `${x.getDate()} ${BULAN_S[x.getMonth()]} – ${y.getDate()} ${BULAN_S[y.getMonth()]} ${y.getFullYear()}`;
+  return `${x.getDate()} – ${y.getDate()} ${BULAN_S[y.getMonth()]} ${y.getFullYear()}`;
+};
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    method: opts.method || 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+  });
+  if (res.status === 401) {
+    location.href = '/login?next=' + encodeURIComponent(location.pathname);
+    throw new Error('Sesi berakhir.');
+  }
+  let data = null;
+  try { data = await res.json(); } catch (e) {}
+  if (!res.ok) throw new Error((data && data.message) || 'Terjadi kesalahan pada server.');
+  return data;
+}
+
+function toast(type, msg) {
+  const map = {
+    success: ['bg-leaf-100 border-leaf-300 text-leaf-800', 'fa-circle-check'],
+    error: ['bg-rose2-100 border-rose2-200 text-rose2-600', 'fa-circle-exclamation'],
+    info: ['bg-sky2-100 border-sky2-200 text-leaf-800', 'fa-circle-info'],
+  };
+  const [cls, icon] = map[type] || map.info;
+  const el = document.createElement('div');
+  el.className = `pointer-events-auto animate-pop flex items-start gap-3 rounded-2xl border px-4 py-3 shadow-lg ${cls}`;
+  el.innerHTML = `<i class="fa-solid ${icon} mt-0.5"></i><p class="text-sm font-bold flex-1 break-words">${esc(msg)}</p>`;
+  $('toastList').appendChild(el);
+  setTimeout(() => { el.style.transition = 'opacity .3s'; el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3500);
+}
+
+/* ======================= Navbar hamburger ======================= */
+const NAV_ITEMS = [
+  { href: '/', icon: 'fa-house', label: 'Beranda & Laporan' },
+  { href: '/calendar', icon: 'fa-calendar-days', label: 'Kalender' },
+  { href: '/statistic', icon: 'fa-chart-simple', label: 'Statistik' },
+  { href: '/export', icon: 'fa-file-pdf', label: 'Export PDF' },
+];
+function mountNav(active, pageTitle) {
+  const links = NAV_ITEMS.map((i) =>
+    `<a href="${i.href}" class="flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition ${i.href === active ? 'bg-leaf-500 text-white shadow-sm' : 'text-leaf-800 hover:bg-leaf-100'}">
+       <i class="fa-solid ${i.icon} w-5 text-center"></i>${i.label}</a>`).join('');
+  $('navRoot').innerHTML = `
+    <header class="sticky top-0 z-40 bg-cream-50/85 backdrop-blur-md border-b border-leaf-100 pt-[env(safe-area-inset-top)]">
+      <div class="max-w-xl mx-auto h-14 px-4 flex items-center gap-3">
+        <button id="menuOpen" aria-label="Buka menu" class="w-10 h-10 rounded-2xl bg-leaf-100 text-leaf-700 flex items-center justify-center active:scale-95"><i class="fa-solid fa-bars"></i></button>
+        <div class="leading-tight">
+          <p class="text-[11px] font-bold tracking-wide text-leaf-600 uppercase">Hiro Zenith Report</p>
+          <h1 class="text-base font-extrabold text-leaf-900">${pageTitle}</h1>
+        </div>
+      </div>
+    </header>
+    <div id="drawer" class="fixed inset-0 z-[60] pointer-events-none">
+      <div id="drawerOverlay" class="absolute inset-0 bg-leaf-900/40 backdrop-blur-sm opacity-0 transition-opacity duration-300"></div>
+      <aside id="drawerPanel" class="absolute left-0 top-0 h-full w-72 max-w-[82%] bg-cream-50 shadow-2xl -translate-x-full transition-transform duration-300 flex flex-col pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+        <div class="flex items-center justify-between px-5 h-14 border-b border-leaf-100">
+          <div class="flex items-center gap-2 font-extrabold text-leaf-800"><i class="fa-solid fa-leaf text-leaf-500"></i> Menu</div>
+          <button id="menuClose" aria-label="Tutup menu" class="w-9 h-9 rounded-xl bg-leaf-100 text-leaf-700 flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <nav class="p-4 space-y-2 flex-1">${links}</nav>
+        <div class="p-4 border-t border-leaf-100">
+          <button id="btnLock" class="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold text-rose2-600 bg-rose2-100 active:scale-[.98]">
+            <i class="fa-solid fa-lock w-5 text-center"></i>Kunci Aplikasi
+          </button>
+        </div>
+      </aside>
+    </div>`;
+  const open = () => { $('drawer').classList.remove('pointer-events-none'); $('drawerOverlay').classList.remove('opacity-0'); $('drawerPanel').classList.remove('-translate-x-full'); };
+  const close = () => { $('drawer').classList.add('pointer-events-none'); $('drawerOverlay').classList.add('opacity-0'); $('drawerPanel').classList.add('-translate-x-full'); };
+  $('menuOpen').addEventListener('click', open);
+  $('menuClose').addEventListener('click', close);
+  $('drawerOverlay').addEventListener('click', close);
+  $('btnLock').addEventListener('click', async () => {
+    try { await fetch('/api/logout', { method: 'POST' }); } catch (e) {}
+    location.href = '/login';
+  });
+}
+
+/* ======================= State ======================= */
+const S = {
+  weekStart: mondayOf(todayISO()),
+  items: [],
+  settings: { includeSaturday: false, includeSunday: false },
+  editingId: null,
+  deleteId: null,
+  saving: false,
+  config: {},
+};
+
+const isWorkday = (iso) => {
+  const w = parseISO(iso).getDay();
+  if (w === 6) return S.settings.includeSaturday;
+  if (w === 0) return S.settings.includeSunday;
+  return true;
+};
+
+/* ======================= Form ======================= */
+function updateDatePreview() {
+  const v = $('date').value;
+  $('datePreview').innerHTML = isISO(v)
+    ? `<i class="fa-regular fa-calendar-check"></i>${longDate(v)}`
+    : `<i class="fa-regular fa-calendar"></i>Pilih tanggal`;
+}
+function setFieldError(id, msg) {
+  const box = $(id);
+  if (!msg) { box.classList.add('hidden'); return; }
+  box.querySelector('span').textContent = msg;
+  box.classList.remove('hidden');
+}
+function setFormMode(editing) {
+  $('formTitle').textContent = editing ? 'Ubah Kegiatan' : 'Tambah Kegiatan';
+  $('formSub').textContent = editing ? 'Perbarui data kegiatan ini' : 'Catat apa yang kamu kerjakan';
+  $('formIcon').innerHTML = `<i class="fa-solid ${editing ? 'fa-pen' : 'fa-plus'}"></i>`;
+  $('formIcon').className = `w-10 h-10 shrink-0 rounded-2xl flex items-center justify-center ${editing ? 'bg-peach-100 text-peach-600' : 'bg-leaf-100 text-leaf-600'}`;
+  $('btnSaveText').textContent = editing ? 'Perbarui Kegiatan' : 'Simpan Kegiatan';
+  $('btnCancelEdit').classList.toggle('hidden', !editing);
+}
+function resetForm(keepDate = true) {
+  S.editingId = null;
+  $('title').value = '';
+  $('notes').value = '';
+  if (!keepDate) $('date').value = todayISO();
+  setFieldError('titleErr'); setFieldError('dateErr');
+  setFormMode(false);
+  updateDatePreview();
+}
+function beginEdit(item) {
+  S.editingId = item.id;
+  $('title').value = item.title;
+  $('date').value = item.date;
+  $('notes').value = item.notes || '';
+  setFieldError('titleErr'); setFieldError('dateErr');
+  setFormMode(true);
+  updateDatePreview();
+  $('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => $('title').focus({ preventScroll: true }), 350);
+}
+function prefillDate(iso) {
+  resetForm(true);
+  $('date').value = iso;
+  updateDatePreview();
+  $('formCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(() => $('title').focus({ preventScroll: true }), 350);
+}
+
+async function save() {
+  if (S.saving) return;
+  const title = $('title').value.trim();
+  const date = $('date').value;
+  const notes = $('notes').value.trim();
+  setFieldError('titleErr'); setFieldError('dateErr');
+
+  let invalid = false;
+  if (!title) { setFieldError('titleErr', 'Nama kegiatan wajib diisi.'); invalid = true; }
+  if (!isISO(date)) { setFieldError('dateErr', 'Tanggal wajib dipilih.'); invalid = true; }
+  if (invalid) { toast('error', 'Periksa kembali isian yang wajib.'); if (!title) $('title').focus(); return; }
+
+  S.saving = true;
+  $('btnSave').disabled = true;
+  $('btnSave').classList.add('opacity-70');
+  $('btnSaveText').textContent = 'Menyimpan...';
+  try {
+    const wasEditing = Boolean(S.editingId);
+    if (wasEditing) await api(`/api/activities/${S.editingId}`, { method: 'PUT', body: { title, date, notes } });
+    else await api('/api/activities', { method: 'POST', body: { title, date, notes } });
+    toast('success', wasEditing ? 'Kegiatan berhasil diperbarui.' : 'Kegiatan berhasil ditambahkan.');
+    S.editingId = null;
+    $('title').value = '';
+    $('notes').value = '';
+    setFormMode(false);
+    S.weekStart = mondayOf(date);
+    await Promise.all([loadWeek(), loadToday()]);
+    $('title').focus({ preventScroll: true });
+  } catch (e) {
+    toast('error', e.message);
+    setFormMode(Boolean(S.editingId));
+  } finally {
+    S.saving = false;
+    $('btnSave').disabled = false;
+    $('btnSave').classList.remove('opacity-70');
+  }
+}
+
+/* ======================= Daftar mingguan ======================= */
+function skeleton() {
+  return [1, 2].map(() => `<div class="rounded-2xl bg-leaf-50 border border-leaf-100 p-4 animate-pulse"><div class="h-4 w-40 bg-leaf-100 rounded"></div><div class="mt-3 h-3 w-full bg-leaf-100 rounded"></div><div class="mt-2 h-3 w-2/3 bg-leaf-100 rounded"></div></div>`).join('');
+}
+
+async function loadWeek() {
+  $('weekLabel').textContent = rangeLabel(S.weekStart, addDays(S.weekStart, 6));
+  $('weekNow').classList.toggle('hidden', S.weekStart === mondayOf(todayISO()));
+  $('weekList').innerHTML = skeleton();
+  try {
+    S.items = await api(`/api/activities?from=${S.weekStart}&to=${addDays(S.weekStart, 6)}`);
+    renderWeek();
+  } catch (e) {
+    $('weekList').innerHTML = `<div class="rounded-2xl bg-rose2-100 border border-rose2-200 text-rose2-600 p-4 text-sm font-bold flex items-center gap-3">
+      <i class="fa-solid fa-triangle-exclamation"></i><span class="flex-1">${esc(e.message)}</span>
+      <button id="retryWeek" class="h-9 px-3 rounded-xl bg-white text-rose2-600 text-xs font-extrabold">Coba lagi</button></div>`;
+    $('retryWeek').addEventListener('click', loadWeek);
+  }
+}
+
+function renderWeek() {
+  const today = todayISO();
+  const byDate = {};
+  S.items.forEach((it) => { (byDate[it.date] = byDate[it.date] || []).push(it); });
+
+  let workdays = 0, filled = 0;
+  const cards = [];
+  for (let i = 0; i < 7; i++) {
+    const iso = addDays(S.weekStart, i);
+    const list = byDate[iso] || [];
+    const wd = isWorkday(iso);
+    if (wd) { workdays++; if (list.length) filled++; }
+    if (!wd && !list.length) continue; // sembunyikan akhir pekan yang tidak dipakai
+
+    const future = iso > today;
+    const isToday = iso === today;
+    let tone = 'bg-white border-leaf-100';
+    if (!list.length && !future && wd && !isToday) tone = 'bg-rose2-100/50 border-rose2-200';
+    if (isToday) tone = 'bg-peach-100/60 border-peach-200';
+
+    const head = `
+      <div class="flex items-center justify-between gap-2">
+        <div class="min-w-0">
+          <h4 class="text-sm font-extrabold text-leaf-900">${longDate(iso)}</h4>
+          <div class="mt-1 flex flex-wrap gap-1.5">
+            ${isToday ? '<span class="text-[10px] font-extrabold uppercase tracking-wide bg-peach-400 text-white rounded-full px-2 py-0.5">Hari ini</span>' : ''}
+            ${!wd ? '<span class="text-[10px] font-extrabold uppercase tracking-wide bg-leaf-100 text-leaf-600 rounded-full px-2 py-0.5">Di luar hari kerja</span>' : ''}
+            ${list.length ? `<span class="text-[10px] font-extrabold uppercase tracking-wide bg-leaf-500 text-white rounded-full px-2 py-0.5">${list.length} kegiatan</span>` : ''}
+          </div>
+        </div>
+        <button data-action="add" data-date="${iso}" aria-label="Tambah kegiatan" class="w-10 h-10 shrink-0 rounded-2xl bg-leaf-500 text-white flex items-center justify-center active:scale-95 shadow-sm"><i class="fa-solid fa-plus"></i></button>
+      </div>`;
+
+    let body = '';
+    if (list.length) {
+      body = `<div class="mt-2">${list.map((it, n) => `
+        <div class="flex gap-3 py-3 border-t border-leaf-100/80">
+          <div class="w-6 h-6 shrink-0 rounded-full bg-leaf-100 text-leaf-700 text-xs font-extrabold flex items-center justify-center mt-0.5">${n + 1}</div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-bold text-leaf-900 break-words">${esc(it.title)}</p>
+            ${it.notes ? `<p class="mt-1 text-xs italic text-leaf-600 break-words whitespace-pre-line">${esc(it.notes)}</p>` : ''}
+          </div>
+          <div class="flex gap-1.5 shrink-0">
+            <button data-action="edit" data-id="${it.id}" aria-label="Ubah" class="w-9 h-9 rounded-xl bg-peach-100 text-peach-600 flex items-center justify-center active:scale-95"><i class="fa-solid fa-pen text-xs"></i></button>
+            <button data-action="delete" data-id="${it.id}" aria-label="Hapus" class="w-9 h-9 rounded-xl bg-rose2-100 text-rose2-600 flex items-center justify-center active:scale-95"><i class="fa-solid fa-trash text-xs"></i></button>
+          </div>
+        </div>`).join('')}</div>`;
+    } else {
+      const msg = future ? 'Belum tiba' : isToday ? 'Hari ini belum diisi' : 'Belum ada laporan';
+      const icon = future ? 'fa-hourglass-half' : 'fa-circle-exclamation';
+      body = `<div class="mt-3 rounded-xl border border-dashed ${future ? 'border-leaf-200 text-leaf-500' : 'border-rose2-400/60 text-rose2-600'} px-3 py-2.5 text-xs font-bold flex items-center gap-2"><i class="fa-solid ${icon}"></i>${msg}</div>`;
+    }
+    cards.push(`<div class="rounded-2xl border p-4 ${tone}">${head}${body}</div>`);
+  }
+
+  $('weekList').innerHTML = cards.join('');
+  $('weekSummary').innerHTML = `
+    <span class="inline-flex items-center gap-1.5 text-xs font-extrabold bg-leaf-100 text-leaf-800 rounded-full px-3 py-1.5"><i class="fa-solid fa-list-check"></i>${S.items.length} kegiatan</span>
+    <span class="inline-flex items-center gap-1.5 text-xs font-extrabold bg-sky2-100 text-leaf-800 rounded-full px-3 py-1.5"><i class="fa-solid fa-calendar-check"></i>${filled}/${workdays} hari terisi</span>`;
+}
+
+async function loadToday() {
+  const t = todayISO();
+  $('heroDate').textContent = longDate(t);
+  try {
+    const rows = await api(`/api/activities?from=${t}&to=${t}`);
+    $('heroStatus').innerHTML = rows.length
+      ? `<i class="fa-solid fa-circle-check text-leaf-500"></i> Hari ini sudah ada ${rows.length} kegiatan tercatat`
+      : `<i class="fa-solid fa-pen-to-square text-peach-600"></i> Hari ini belum ada laporan`;
+  } catch (e) {
+    $('heroStatus').innerHTML = `<i class="fa-solid fa-triangle-exclamation text-rose2-600"></i> Gagal memuat status`;
+  }
+}
+
+/* ======================= Hapus ======================= */
+function openDelete(id) {
+  const it = S.items.find((x) => x.id === id);
+  if (!it) return;
+  S.deleteId = id;
+  $('deleteText').textContent = `“${it.title}” — ${longDate(it.date)}`;
+  $('deleteModal').classList.remove('hidden');
+  $('deleteModal').classList.add('flex');
+}
+function closeDelete() {
+  S.deleteId = null;
+  $('deleteModal').classList.add('hidden');
+  $('deleteModal').classList.remove('flex');
+}
+async function confirmDelete() {
+  if (!S.deleteId) return;
+  const id = S.deleteId;
+  $('deleteConfirm').disabled = true;
+  try {
+    await api(`/api/activities/${id}`, { method: 'DELETE' });
+    toast('success', 'Kegiatan berhasil dihapus.');
+    if (S.editingId === id) resetForm(true);
+    closeDelete();
+    await Promise.all([loadWeek(), loadToday()]);
+  } catch (e) {
+    toast('error', e.message);
+  } finally {
+    $('deleteConfirm').disabled = false;
+  }
+}
+
+/* ======================= Init ======================= */
+async function init() {
+  mountNav('/', 'Daily Report');
+
+  $('btnSave').addEventListener('click', save);
+  $('btnCancelEdit').addEventListener('click', () => { resetForm(true); toast('info', 'Mode ubah dibatalkan.'); });
+  $('title').addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); } });
+  $('date').addEventListener('input', updateDatePreview);
+  $('chipToday').addEventListener('click', () => { $('date').value = todayISO(); updateDatePreview(); });
+  $('chipYesterday').addEventListener('click', () => { $('date').value = addDays(todayISO(), -1); updateDatePreview(); });
+
+  $('weekPrev').addEventListener('click', () => { S.weekStart = addDays(S.weekStart, -7); loadWeek(); });
+  $('weekNext').addEventListener('click', () => { S.weekStart = addDays(S.weekStart, 7); loadWeek(); });
+  $('weekNow').addEventListener('click', () => { S.weekStart = mondayOf(todayISO()); loadWeek(); });
+
+  $('weekList').addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    if (action === 'add') prefillDate(btn.dataset.date);
+    if (action === 'edit') { const it = S.items.find((x) => x.id === Number(btn.dataset.id)); if (it) beginEdit(it); }
+    if (action === 'delete') openDelete(Number(btn.dataset.id));
+  });
+
+  $('deleteCancel').addEventListener('click', closeDelete);
+  $('deleteOverlay').addEventListener('click', closeDelete);
+  $('deleteConfirm').addEventListener('click', confirmDelete);
+
+  $('date').value = todayISO();
+  updateDatePreview();
+  setFormMode(false);
+
+  try {
+    const [cfg, st] = await Promise.all([api('/api/config'), api('/api/settings')]);
+    S.config = cfg; S.settings = st;
+    $('heroName').textContent = (cfg.name || '').split(' ')[0] || 'Kamu';
+  } catch (e) {
+    $('heroName').textContent = 'Kamu';
+    toast('error', e.message);
+  }
+
+  // Deep-link dari kalender / statistik: /?date=YYYY-MM-DD atau /?edit=ID
+  const params = new URLSearchParams(location.search);
+  const qDate = params.get('date');
+  const qEdit = Number(params.get('edit'));
+  let pending = null;
+  if (qEdit > 0) {
+    try {
+      const it = await api(`/api/activities/${qEdit}`);
+      S.weekStart = mondayOf(it.date);
+      pending = () => beginEdit(it);
+    } catch (e) { toast('error', e.message); }
+  } else if (isISO(qDate)) {
+    S.weekStart = mondayOf(qDate);
+    pending = () => prefillDate(qDate);
+  }
+  if (params.toString()) history.replaceState(null, '', '/');
+
+  await Promise.all([loadWeek(), loadToday()]);
+  if (pending) pending();
+}
+init();
+</script>
+</body>
+</html>
